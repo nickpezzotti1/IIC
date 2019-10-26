@@ -4,6 +4,7 @@ from datetime import datetime
 import torch
 import torchvision
 from torch.utils.data import ConcatDataset
+import MNIST
 
 from code.datasets.clustering.truncated_dataset import TruncatedDataset
 from code.utils.cluster.transforms import sobel_make_transforms, \
@@ -142,7 +143,7 @@ def cluster_create_dataloaders(config):
     config.mapping_assignment_partitions = [True]
     config.mapping_test_partitions = [False]
 
-    dataset_class = torchvision.datasets.MNIST
+    dataset_class = MNIST
 
     tf1, tf2, tf3 = greyscale_make_transforms(config)
 
@@ -272,7 +273,8 @@ def _create_dataloaders(config, dataset_class, tf1, tf2,
         root=config.dataset_root,
         transform=tf1,
         train=train_partition,
-        target_transform=target_transform)
+        target_transform=target_transform,
+        download=True)
 
     if hasattr(config, "mix_train"):
       if config.mix_train and (train_partition == "train+unlabeled"):

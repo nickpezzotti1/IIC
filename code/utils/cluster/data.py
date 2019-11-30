@@ -317,6 +317,13 @@ def _create_dataloaders(config, dataset_class, tf1, tf2,
           transform=tf2,  # random per call
           split=train_partition,
           target_transform=target_transform)
+      elif "MNIST-custom" == config.dataset:
+        print("Custom mnist loading with noise")
+        train_imgs_tf_curr = dataset_class(
+          root=config.dataset_root,
+          transform=torchvision.transforms.Compose([tf2, torchvision.transforms.Lambda(lambda x: x + torch.rand(x.shape))]),
+          train=train_partition,
+          target_transform=target_transform)
       else:
         train_imgs_tf_curr = dataset_class(
           root=config.dataset_root,

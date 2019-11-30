@@ -78,7 +78,7 @@ def cluster_twohead_create_dataloaders(config):
     config.mapping_assignment_partitions = [True, False]
     config.mapping_test_partitions = [True, False]
 
-    dataset_class = MNIST
+    dataset_class = MNIST.MNIST
 
     tf1, tf2, tf3 = greyscale_make_transforms(config)
 

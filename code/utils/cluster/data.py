@@ -70,6 +70,17 @@ def cluster_twohead_create_dataloaders(config):
     dataset_class = torchvision.datasets.MNIST
 
     tf1, tf2, tf3 = greyscale_make_transforms(config)
+    
+   elif config.dataset == "MNIST-custom":
+    config.train_partitions_head_A = [True, False]
+    config.train_partitions_head_B = config.train_partitions_head_A
+
+    config.mapping_assignment_partitions = [True, False]
+    config.mapping_test_partitions = [True, False]
+
+    dataset_class = MNIST
+
+    tf1, tf2, tf3 = greyscale_make_transforms(config)
 
   else:
     assert (False)

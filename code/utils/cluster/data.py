@@ -71,7 +71,7 @@ def cluster_twohead_create_dataloaders(config):
 
     tf1, tf2, tf3 = greyscale_make_transforms(config)
     
-   elif config.dataset == "MNIST-custom":
+  elif config.dataset == "MNIST-custom":
     config.train_partitions_head_A = [True, False]
     config.train_partitions_head_B = config.train_partitions_head_A
 

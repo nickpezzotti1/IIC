@@ -129,7 +129,7 @@ config.output_k = config.output_k_B  # for eval code
 assert (config.output_k_A >= config.gt_k)
 config.eval_mode = "hung"
 
-assert ("MNIST" == config.dataset)
+#assert ("MNIST" == config.dataset)
 dataset_class = torchvision.datasets.MNIST
 config.train_partitions = [True, False]
 config.mapping_assignment_partitions = [True, False]

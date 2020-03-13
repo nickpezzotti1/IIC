@@ -12,6 +12,30 @@ from code.utils.cluster.transforms import sobel_make_transforms, \
 from code.utils.semisup.dataset import TenCropAndFinish
 from .general import reorder_train_deterministic
 
+import pickle
+from torch.utils.data import Dataset
+ 
+class AdversarialDataset(Dataset):
+    """Face Landmarks dataset."""
+ 
+    def __init__(self):
+      f = open("/content/adversarials (1).txt", "rb")
+      self.dataset = pickle.load(f)
+      self.transform = torchvision.transforms.Compose([
+        torchvision.transforms.ToPILImage(),
+        torchvision.transforms.RandomCrop(24, 24),
+        torchvision.transforms.ToTensor(),
+      ])
+      print("Loading " + str(len(self.dataset)) + " adversaraial examples")
+ 
+ 
+    def __len__(self):
+        return len(self.dataset)
+ 
+    def __getitem__(self, idx):
+        example = self.dataset[idx]
+        return self.transform(torch.from_numpy(example[1])), torch.from_numpy(example[2])
+
 
 # Used by sobel and greyscale clustering twohead scripts -----------------------
 
@@ -83,6 +107,17 @@ def cluster_twohead_create_dataloaders(config):
     tf1, tf2, tf3 = greyscale_make_transforms(config)
     tf2 = torchvision.transforms.Compose([tf2, torchvision.transforms.Lambda(lambda x: x + torch.rand(x.shape)/100)])
 
+  elif config.dataset == "MNIST-adv":
+    config.train_partitions_head_A = [True, False]
+    config.train_partitions_head_B = config.train_partitions_head_A
+
+    config.mapping_assignment_partitions = [True, False]
+    config.mapping_test_partitions = [True, False]
+
+    dataset_class = torchvision.datasets.MNIST
+
+    tf1, tf2, tf3 = greyscale_make_transforms(config)
+  
   else:
     assert (False)
 
@@ -280,6 +315,13 @@ def _create_dataloaders(config, dataset_class, tf1, tf2,
         transform=tf1,
         split=train_partition,
         target_transform=target_transform)
+    elif config.dataset == "MNIST-adv":
+      train_imgs_curr = dataset_class(
+        root=config.dataset_root,
+        transform=tf1,
+        train=train_partition,
+        target_transform=target_transform,
+        download=True) + AdversarialDataset()
     else:
       train_imgs_curr = dataset_class(
         root=config.dataset_root,
@@ -318,6 +360,12 @@ def _create_dataloaders(config, dataset_class, tf1, tf2,
           transform=tf2,  # random per call
           split=train_partition,
           target_transform=target_transform)
+      elif config.dataset == "MNIST-adv":
+        train_imgs_tf_curr = dataset_class(
+          root=config.dataset_root,
+          transform=tf2,
+          train=train_partition,
+          target_transform=target_transform) + AdversarialDataset()
       else:
         train_imgs_tf_curr = dataset_class(
           root=config.dataset_root,
@@ -371,6 +419,12 @@ def _create_mapping_loader(config, dataset_class, tf3, partitions,
         transform=tf3,
         split=partition,
         target_transform=target_transform)
+    elif config.dataset == "MNIST-adv":
+      imgs_curr = dataset_class(
+        root=config.dataset_root,
+        transform=tf3,
+        train=partition,
+        target_transform=target_transform) + AdversarialDataset()
     else:
       imgs_curr = dataset_class(
         root=config.dataset_root,

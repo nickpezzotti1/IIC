@@ -207,11 +207,13 @@ def train(render_count=-1):
 
   if config.restart:
     if not config.restart_from_best:
-      next_epoch = config.last_epoch + 1  # corresponds to last saved model
+      if "last_epoch" in config.__dict__:
+          next_epoch = config.last_epoch + 1  # corresponds to last saved model
+      else:
+          next_epoch = 10  # corresponds to last saved model
     else:
       # sanity check
       next_epoch = np.argmax(np.array(config.epoch_acc)) + 1
-      assert (next_epoch == config.last_epoch + 1)
     print("starting from epoch %d" % next_epoch)
 
     # in case we overshot without saving

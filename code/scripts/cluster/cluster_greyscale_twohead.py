@@ -111,6 +111,10 @@ parser.add_argument("--no_jitter", dest="no_jitter", default=False,
                     action="store_true")
 parser.add_argument("--no_flip", dest="no_flip", default=False,
                     action="store_true")
+parser.add_argument("--nu", type=int, default=100)
+parser.add_argument("--adv_n", type=int, default=None)
+parser.add_argument("--adv_path", type=str, default=None)
+
 
 config = parser.parse_args()
 

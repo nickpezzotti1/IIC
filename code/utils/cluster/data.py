@@ -16,6 +16,13 @@ import pickle
 from torch.utils.data import Dataset
  
 class AdversarialDataset(Dataset):
+  '''
+  This class represents the class used for adversarial training. This class in particular was used
+  for iamge classification for MNIST. 
+  
+  It takes in a pickled python2 list of tuples of the following format:
+  [(original_image, adversarial_image, label)]
+  '''
 
     def __init__(self, path, number_of_samples=None):
       f = open(path, "rb")

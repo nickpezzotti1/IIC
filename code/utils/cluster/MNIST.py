@@ -11,7 +11,8 @@ import codecs
 
 class MNIST(data.Dataset):
     """
-    DISCLAIMER: class taken from the PyTorch library: https://pytorch.org/cppdocs/api/classtorch_1_1data_1_1datasets_1_1_m_n_i_s_t.html#class-mnist
+    DISCLAIMER: class taken from the PyTorch library: 
+    https://pytorch.org/cppdocs/api/classtorch_1_1data_1_1datasets_1_1_m_n_i_s_t.html#class-mnist
  
     `MNIST <http://yann.lecun.com/exdb/mnist/>`_ Dataset.
 

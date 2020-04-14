@@ -14,6 +14,7 @@ from .general import reorder_train_deterministic
 
 import pickle
 from torch.utils.data import Dataset
+import numpy as np
  
 class AdversarialDataset(Dataset):
     '''
@@ -115,8 +116,13 @@ def cluster_twohead_create_dataloaders(config):
     dataset_class = MNIST.MNIST
 
     tf1, tf2, tf3 = greyscale_make_transforms(config)
-    tf2 = torchvision.transforms.Compose([tf2, torchvision.transforms.Lambda(lambda x: x + torch.rand(x.shape)/config.nu)])
-
+    tf2 = \
+    torchvision.transforms.Compose([\
+            tf2, \
+            torchvision.transforms.Lambda(lambda x: \
+                                          np.minimum(\
+                                             x + torch.rand(x.shape)/config.nu, \
+                                             np.ones(x.shape)))
   elif config.dataset == "MNIST-gaussian-noise":
     config.train_partitions_head_A = [True, False]
     config.train_partitions_head_B = config.train_partitions_head_A
@@ -127,7 +133,13 @@ def cluster_twohead_create_dataloaders(config):
     dataset_class = MNIST.MNIST
 
     tf1, tf2, tf3 = greyscale_make_transforms(config)
-    tf2 = torchvision.transforms.Compose([tf2, torchvision.transforms.Lambda(lambda x: x + torch.randn(x.shape)/config.nu)])
+    tf2 = \
+    torchvision.transforms.Compose([\
+            tf2, \
+            torchvision.transforms.Lambda(lambda x: \
+                                          np.minimum(\
+                                             x + torch.randn(x.shape)/config.nu, \
+                                             np.ones(x.shape)))
     
   elif config.dataset == "MNIST-adv":
     config.train_partitions_head_A = [True, False]

@@ -120,7 +120,7 @@ def cluster_twohead_create_dataloaders(config):
     torchvision.transforms.Compose([\
             tf2, \
             torchvision.transforms.Lambda(lambda x: np.minimum(\
-              x + (torch.rand(x.shape) - 0.5)/conifg.nu,\
+              x + (torch.rand(x.shape) - 0.5)/config.nu,\
               np.ones(x.shape)))
             ])
   elif config.dataset == "MNIST-gaussian-noise":

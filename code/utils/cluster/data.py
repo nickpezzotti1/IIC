@@ -119,10 +119,10 @@ def cluster_twohead_create_dataloaders(config):
     tf2 = \
     torchvision.transforms.Compose([\
             tf2, \
-            torchvision.transforms.Lambda(lambda x: \
-                                          np.minimum(\
-                                             x + torch.rand(x.shape)/config.nu, \
-                                             np.ones(x.shape)))])
+            torchvision.transforms.Lambda(lambda x: np.minimum(\
+              x + (torch.rand(x.shape) - 0.5)/conifg.nu,\
+              np.ones(x.shape)))
+            ])
   elif config.dataset == "MNIST-gaussian-noise":
     config.train_partitions_head_A = [True, False]
     config.train_partitions_head_B = config.train_partitions_head_A

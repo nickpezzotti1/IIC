@@ -4,12 +4,48 @@ from datetime import datetime
 import torch
 import torchvision
 from torch.utils.data import ConcatDataset
+import MNIST
 
 from code.datasets.clustering.truncated_dataset import TruncatedDataset
 from code.utils.cluster.transforms import sobel_make_transforms, \
   greyscale_make_transforms
 from code.utils.semisup.dataset import TenCropAndFinish
 from .general import reorder_train_deterministic
+
+import pickle
+from torch.utils.data import Dataset
+import numpy as np
+ 
+class AdversarialDataset(Dataset):
+    '''
+    This class represents the class used for adversarial training. This class in particular was used
+    for iamge classification for MNIST. 
+
+    It takes in a pickled python2 list of tuples of the following format:
+    [(original_image, adversarial_image, label)]
+    '''
+
+    def __init__(self, path, number_of_samples=None):
+      f = open(path, "rb")
+      
+      self.dataset = pickle.load(f)
+      if number_of_samples:
+          self.dataset = self.dataset[:number_of_samples]
+          
+      self.transform = torchvision.transforms.Compose([
+        torchvision.transforms.ToPILImage(),
+        torchvision.transforms.RandomCrop(24, 24),
+        torchvision.transforms.ToTensor(),
+      ])
+      print("Loading " + str(len(self.dataset)) + " adversaraial examples")
+ 
+ 
+    def __len__(self):
+        return len(self.dataset)
+ 
+    def __getitem__(self, idx):
+        example = self.dataset[idx]
+        return self.transform(torch.from_numpy(example[1])), torch.from_numpy(example[2])
 
 
 # Used by sobel and greyscale clustering twohead scripts -----------------------
@@ -69,7 +105,53 @@ def cluster_twohead_create_dataloaders(config):
     dataset_class = torchvision.datasets.MNIST
 
     tf1, tf2, tf3 = greyscale_make_transforms(config)
+    
+  elif config.dataset == "MNIST-uniform-noise":
+    config.train_partitions_head_A = [True, False]
+    config.train_partitions_head_B = config.train_partitions_head_A
 
+    config.mapping_assignment_partitions = [True, False]
+    config.mapping_test_partitions = [True, False]
+
+    dataset_class = MNIST.MNIST
+
+    tf1, tf2, tf3 = greyscale_make_transforms(config)
+    tf2 = \
+    torchvision.transforms.Compose([\
+            tf2, \
+            torchvision.transforms.Lambda(lambda x: np.minimum(\
+              x + (torch.rand(x.shape) - 0.5)/config.nu,\
+              np.ones(x.shape)))
+            ])
+  elif config.dataset == "MNIST-gaussian-noise":
+    config.train_partitions_head_A = [True, False]
+    config.train_partitions_head_B = config.train_partitions_head_A
+
+    config.mapping_assignment_partitions = [True, False]
+    config.mapping_test_partitions = [True, False]
+
+    dataset_class = MNIST.MNIST
+
+    tf1, tf2, tf3 = greyscale_make_transforms(config)
+    tf2 = \
+    torchvision.transforms.Compose([\
+            tf2, \
+            torchvision.transforms.Lambda(lambda x: \
+                                          np.minimum(\
+                                             x + torch.randn(x.shape)/config.nu, \
+                                             np.ones(x.shape)))])
+    
+  elif config.dataset == "MNIST-adv":
+    config.train_partitions_head_A = [True, False]
+    config.train_partitions_head_B = config.train_partitions_head_A
+
+    config.mapping_assignment_partitions = [True, False]
+    config.mapping_test_partitions = [True, False]
+
+    dataset_class = torchvision.datasets.MNIST
+
+    tf1, tf2, tf3 = greyscale_make_transforms(config)
+  
   else:
     assert (False)
 
@@ -142,7 +224,7 @@ def cluster_create_dataloaders(config):
     config.mapping_assignment_partitions = [True]
     config.mapping_test_partitions = [False]
 
-    dataset_class = torchvision.datasets.MNIST
+    dataset_class = MNIST
 
     tf1, tf2, tf3 = greyscale_make_transforms(config)
 
@@ -267,12 +349,20 @@ def _create_dataloaders(config, dataset_class, tf1, tf2,
         transform=tf1,
         split=train_partition,
         target_transform=target_transform)
+    elif config.dataset == "MNIST-adv":
+      train_imgs_curr = dataset_class(
+        root=config.dataset_root,
+        transform=tf1,
+        train=train_partition,
+        target_transform=target_transform,
+        download=True) + AdversarialDataset(config.adv_path, config.adv_n)
     else:
       train_imgs_curr = dataset_class(
         root=config.dataset_root,
         transform=tf1,
         train=train_partition,
-        target_transform=target_transform)
+        target_transform=target_transform,
+        download=True)
 
     if hasattr(config, "mix_train"):
       if config.mix_train and (train_partition == "train+unlabeled"):
@@ -304,6 +394,12 @@ def _create_dataloaders(config, dataset_class, tf1, tf2,
           transform=tf2,  # random per call
           split=train_partition,
           target_transform=target_transform)
+      elif config.dataset == "MNIST-adv":
+        train_imgs_tf_curr = dataset_class(
+          root=config.dataset_root,
+          transform=tf2,
+          train=train_partition,
+          target_transform=target_transform) + AdversarialDataset(config.adv_path, config.adv_n)
       else:
         train_imgs_tf_curr = dataset_class(
           root=config.dataset_root,
@@ -357,6 +453,12 @@ def _create_mapping_loader(config, dataset_class, tf3, partitions,
         transform=tf3,
         split=partition,
         target_transform=target_transform)
+    elif config.dataset == "MNIST-adv":
+      imgs_curr = dataset_class(
+        root=config.dataset_root,
+        transform=tf3,
+        train=partition,
+        target_transform=target_transform) + AdversarialDataset(config.adv_path, config.adv_n)
     else:
       imgs_curr = dataset_class(
         root=config.dataset_root,
